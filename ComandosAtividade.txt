@@ -1,0 +1,545 @@
+
+Consultor: Lucas Oliveira Santos
+Trainee em Engenharia de Dados
+
+
+HBASE 
+
+
+
+
+hbase shell = Comando usado para iniciar o shell do HBase;
+
+create 'Stocks', 'Current', 'Closing' = Comando usado para criar uma tabela denominada "Stocks" e suas colunas "Current e Closing"; 
+
+put 'Stocks', 'ABC', Current:Price', 97.3 = Comando usado para inserir um campo para um registro com a chave ABC e o valor de 97.3 para uma coluna denominada preço na familia de colunas Current;
+
+put 'Stocks', 'ABC', 'Closing:Price', 95.7 = Comando usado para inserir um campo para um registro com a chave ABC e o valor de 95.7 para uma coluna denominada preço na familia de colunas Closing;
+
+scan 'Stocks' = Comando para retornar todas as linhas da tabela;
+
+put 'Stocks', 'ABC', 'Current:Status', 'Up' = Comando usado para inserir um campo para o registro com a chave ABC e um valor Up para uma coluna denominada Status na família de colunas Current;
+
+get 'Stocks', 'ABC' = Comando usado para retornar os valores da linha ABC;
+
+put 'Stocks', 'ABC', 'Current:Price', 99.1 = Comando usasdo para definir a coluna Preço na família de colunas Atual da linha ABC como 99.1
+
+get 'Stocks', 'ABC' = Comando usado para retornar os valores para a linha ABC;
+
+get 'Stocks', 'ABC', {TIMERANGE=>[0,nnn-1]} = Comando usado para recuperar a versão anterior do valor da célula substituindo nnn-1 pelo timestamp de Current:Price - 1
+
+delete 'Stocks', 'ABC', 'Current:Status' = Comando usado para excluir a coluna Status na família de colunas Current da linha ABC
+
+put 'Stocks', 'ABC', 'Current:Price', '92.8' = Comando usado para definir a coluna Price na família de colunas Closing da linha ABC para 92,8
+
+
+Hadoop HDFS
+
+hdfs dfs -ls /data = Comando usado para listar os arquivos contidos dentro de uma pasta no HDFS;
+
+ls /usr/hdp = Comando usado para determinar a pasta específica da versão na qual seus aplicativos Hadoop estão armazenados;
+
+hdfs dfs -cat /wordcount_output/part-00000 = Comando para visualizar o conteúdo do arquivo parte-00000, que contém as contagens de palavras;
+
+hdfs dfs -rm -r /wordcount_output = Comando para excluir uma pasta do HDFS;
+
+
+hdfs dfs -mkdir /stream = Comando usado para criar uma pasta denominada stream no armazenamento de blob compartilhado do cluster;
+
+hdfs dfs -put text1 /stream/text1_1 = Comando usado para fazer upload de uma cópia do texto1 para a pasta de fluxo;
+
+hdfs dfs -put devdata.txt /structstream/1 = Comando para fazer upload de uma cópia do devdata.txt para a pasta structstream;
+
+
+HBASE
+
+
+
+hbase org.apache.hadoop.hbase.mapreduce.ImportTsv -Dimporttsv.columns="HBASE_ROW_KEY,Closing:Price,Current:Price" -Dimporttsv.bulk.output="/data/storefile" Stocks /data/stocks.txt  = Comando usado para transformar os dados de stocks.txt delimitados por tabulação no formato HBase StoreFile;
+
+hbase org.apache.hadoop.hbase.mapreduce.LoadIncrementalHFiles /data/storefile Stocks = Comando usado para carregar os dados transformados na tabela Estoques que você criou anteriormente;
+
+scan 'Stocks', {COLUMNS => 'Current:Price'} = Comando usado para retornar apenas a coluna Current:Price para cada linha;
+
+scan 'Stocks', {LIMIT => 3} = Comando para retornar apenas as três primeiras linhas da tabela Stocks;
+
+scan 'Stocks', {STARTROW=>'C', STOPROW=>'H'} = Comando usado para retornar apenas as linhas com valores-chave entre C e H
+
+
+
+
+
+HIVE
+
+
+
+/usr/bin/hive = Comando usado para iniciar a interface da linha de comandos do Hive
+
+CREATE EXTERNAL TABLE StockPrices
+(Stock STRING,
+  ClosingPrice FLOAT,
+  CurrentPrice FLOAT)
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES
+  ('hbase.columns.mapping' = ':key,Closing:Price,Current:Price')
+TBLPROPERTIES ('hbase.table.name' = 'Stocks'); = Comando usado para criar uma tabela do Hive denominada StockPrices que é baseada na tabela Stocks HBase;
+
+SELECT Stock, CurrentPrice, ClosingPrice,        
+IF(CurrentPrice > ClosingPrice, 'Up',IF (CurrentPrice < ClosingPrice,'Down', '-')) AS Status FROM StockPrices 
+ORDER BY Stock; = Comando usado para consultar a tabela Hive;
+
+quit; = Comando usado para sair do shell do Hive;
+
+
+
+
+PHOENIX HBASE (SQLLine
+
+
+
+
+/usr/hdp/3.1.2.2-1/phoenix/bin/sqlline.py zk2-hbasel:2181:/hbase-unsecure = Comando usado para estabelecer uma conexão com o nó Zookeeper;
+
+CREATE VIEW "Stocks" (StockCode VARCHAR 
+PRIMARY KEY,  "Closing"."Price" VARCHAR,  "Current"."Price" VARCHAR); = Comando usado para criar uma exibição SQL baseada na tabela Stocks HBase;
+
+SELECT StockCode, "Current"."Price" FROM "Stocks" WHERE "Current"."Price" > "Closing"."Price"; = Comando usado para consultar uma visualização no phoenix
+
+!exit = Comando para sair do SQLLine
+
+
+
+
+MAVEN/JAVA/VARIÁVEL DE AMBIENTE
+
+
+
+
+javac -version = Comando usado para visualizar a versão do JDK instalado no nó principal;
+
+echo $JAVA_HOME = Comando usado para verificar se a variável de sistema JAVA_HOME está configurada;
+
+sudo apt-get install maven = Comando usado para instalar o Maven;
+
+mvn -v = Comando usado para visualizar os detalhes da instalação do Maven;
+
+export PATH=/usr/share/maven/bin:$PATH = Comando usado para adicionar a subpasta bin deste caminho à variável PATH do sistema;
+
+mvn archetype:generate -DarchetypeArtifactId=maven-archetype-quickstart -DgroupId=lex.microsoft.com -DartifactId=Stocks -DinteractiveMode=false = Comando usado para criar um novo projeto Maven chamado Stocks;
+
+cd Stocks = Comando usado para alterar o diretório atual para o diretório do projeto Stocks;
+
+ls -R = Comando usado para visualizar a hierarquia de diretórios criada para o projeto;
+
+rm -r src/test = Comando usado para apagar a pasta test do projeto;
+
+nano pom.xml (qualquer nome de arquivo.extensão) = Comando usado para abrir o editor de arquivos Nano;
+
+mvn compile exec:java = Comando para compilar e executar o aplicativo;
+
+ls target = Comando usado para visualizar um arquivo JAR compilado
+
+
+PYTHON PANDAS / SPARK
+
+sudo -HE /usr/bin/anaconda/bin/conda install pandas = Comando Bash para instalar a biblioteca do Pandas
+
+pyspark = Comando usado para iniciar o shell Python Spark;
+
+txt = sc.textFile("wasb:///example/data/gutenberg/davinci.txt") = Comando usado para criar um RDD chamado txt a partir do arquivo de texto davinci.txt de amostra fornecido por padrão com todos os clusters 
+
+txt.count() = Comando usado para contar o número de linhas de texto no arquivo de texto
+
+txt.first() = comando para exibir a primeira linha no arquivo de texto;
+
+filtTxt = txt.filter (lambda txt: "Lucas" em txt) = Comando usado para criar um novo RDD chamado filtTxt que filtra o txt RDD para que apenas as linhas que contenham a palavra "Lucas";
+
+filtTxt.count() = Comando usado para contar o número de linhas no filtTxt RDD;
+
+filtTxt.collect() = Comando usado para exibir o conteúdo do filtTxt RDD;
+
+spark-submit WordCount.py = Comando para enviar o script WordCount.py Python ao Spark
+
+quit() = Comando usado para sair do shell Python;
+
+
+
+
+SCALA SHELL
+
+
+
+
+spark-shell = Comando para iniciar o shell Scala Spark;
+
+val txt = sc.textFile("/example/data/gutenberg/outlineofscience.txt") = Comando usado para criar um RDD chamado txt a partir do arquivo de texto sampleofscience.txt de amostra fornecido por padrão com todos os clusters do HDInsight;
+
+val filtTxt = txt.filter (txt => txt.contains ("science")) = Comando usado para criar um novo RDD chamado filtTxt que filtra o txt RDD para que apenas as linhas que contenham a palavra "science" sejam incluídas;
+
+filtTxt.count() = Comando usado para contar o número de linhas no RDD filtTxt;
+
+filtTxt.collect() = Comando para exibir o conteúdo do filtTxt RDD;
+
+:quit = Comando para sair do shell Scala;
+
+echo "deb https://dl.bintray.com/sbt/debian /" | sudo tee -a /etc/apt/sources.list.d/sbt.list
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
+sudo apt-get update
+sudo apt-get install sbt = Comandos utilizados para adicionar chaves de repositório sbt e instalar o pacote;
+
+sbt –version = Comando utilizado para verificar a versão sbt e fazer o download das bibliotecas necessárias; 
+
+clear = Comando utilizado para limpar o console; 
+
+mkdir wordcount = Comando utilizado para criar uma nova pasta;
+
+cd wordcount = Comando utilizado para acessar a pasta
+
+sbt compile = Comando usado para compilar o código fonte;
+
+sbt package = Comando usado para empacotar o arquivo em um arquivo .JAR
+
+spark-submit --master=yarn --class edx.course.WordCountApplication target/scala-2.11/word-count_2.11-1.0.jar = Comando usado para enviar o aplicativo para o cluster
+
+
+
+
+NOTEBOOK PYTHON 
+
+
+
+txt = sc.textFile('wasb:///example/data/gutenberg/ulysses.txt') txt.first() = Comando utilizado para ler o arquivo de texto ulysses.txt do armazenamento do Azure em um RDD chamado txt e, em seguida, exibir o primeiro elemento no txt RDD;
+
+
+
+
+NOTEBOOK SCALA 
+
+
+
+
+val txt = sc.textFile("wasb:///example/data/gutenberg/ulysses.txt") txt.first() = Comando utilizado para ler o arquivo de texto ulysses.txt do armazenamento do Azure em um RDD chamado txt e, em seguida, exibir o primeiro elemento no txt RDD;
+
+
+
+
+SPARK SQL
+
+
+
+
+csv = spark.read.text('wasb:///HdiSamples/HdiSamples/SensorSampleData/buildin g/building.csv') 
+csv.printSchema() = Comando usado para carregar um arquivo de texto em um DataFrame e exibir o esquema;
+
+csv.show(truncate = False) = Código usado para exibir o conteúdo do DataFrame;
+
+building_csv = spark.read.csv('wasb:///HdiSamples/HdiSamples/SensorSampleData/building /building.csv', header=True, inferSchema=True) 
+building_csv.printSchema() = Comando usado para usar o método spark.read.csv para inferir automaticamente o esquema a partir da linha de cabeçalho dos nomes das colunas e dos dados que o arquivo contém;
+
+building_csv.show() = Comando para visualizar a saída retornada, que descreve o esquema do DataFrame;
+
+from pyspark.sql.types import * 
+schma = StructType([   
+StructField("Date", StringType(), False),   
+StructField("Time", StringType(), False),   
+StructField("TargetTemp", IntegerType(), False),   
+StructField("ActualTemp", StringType(), False),   
+StructField("System", IntegerType(), False),   
+StructField("SystemAge", IntegerType(), False),   
+StructField("BuildingID", IntegerType(), False), 
+]) 
+hvac_csv = spark.read.csv('wasb:///HdiSamples/HdiSamples/SensorSampleData/hvac/HVA C.csv', schema=schma, header=True) hvac_csv.printSchema() = Comando utilizado para definir um esquema chamado schma e carregue o DataFrame usando o método spark.read.csv;
+
+hvac_csv.show() = Comando usado para exibir o conteúdo do DataFrame;
+
+building_csv DataFrame:
+building_data = building_csv.select("BuildingID", "BuildingAge", "HVACproduct") 
+building_data.show() = Comando usado para criar um novo DataFrame chamado building_data selecionando colunas no building_csv DataFrame;
+
+from pyspark.sql.functions import *  
+hvac_data = hvac_csv.select("BuildingID", "ActualTemp", "TargetTemp").filter(col("ActualTemp") > col("TargetTemp")) hvac_data.show() = Comando usado para criar um novo DataFrame chamado hvac_data, selecionando colunas no hvac_csv DataFrame e filtrando-o para incluir apenas linhas em que o ActualTemp é maior que o TargetTemp;
+
+hot_buildings = building_data.join(hvac_data, "BuildingID") 
+hot_buildings.show() = Comando usado para associar o hvac_data DataFrame ao building_data DataFrame;
+
+
+
+
+
+SQL PARA CONSULTAR TABELAS
+
+
+
+
+hot_buildings.createOrReplaceTempView("tmpHotBuildings") = Comando usado para registrar o DataFrame hot_buildings como tabelas temporárias denominadas tmpHotBuildings;
+
+%%sql 
+SELECT HVACProduct, AVG(ActualTemp - TargetTemp) 
+AS AvgError 
+FROM tmpHotBuildings 
+GROUP BY HVACproduct 
+ORDER BY HVACproduct = Comando usado para consultar as tabelas temporárias usando o SQL incorporado;
+
+building_csv.write.saveAsTable("building") 
+building_df = spark.sql("SELECT * FROM building") 
+building_df.show() = Comando usado para salvar o DataFrame building_csv como uma tabela persistente chamada hvac, para que possa ser acessada por outros processos;
+
+
+
+
+
+CONSULTAR UMA TABELA NO HIVE
+
+
+
+
+calls = spark.sql("" "SELECT devicemodel, COUNT (*) AS calls 
+  FROM hivesampletable 
+  GROUP BY devicemodel 
+  ORDER BY chama DESC" "") 
+calls.show() = Comando para criar um DataFrame com base em uma consulta do Hive com relação ao hivesampletable padrão no seu cluster e exibe seu conteúdo;
+
+
+
+CARREGAR DADOS NO DATAFRAME / USAR MÉTODOS DATAFRAME
+
+
+val csv = spark.read.text("wasb:///HdiSamples/HdiSamples/SensorSampleData/building/building.csv") 
+csv.printSchema = Comando usado para carregar um arquivo de texto em um DataFrame e exibir o esquema
+
+csv.show(truncate = false) = Comando usado para exibir o conteúdo do DataFrame
+
+val building_csv = spark.read.option("inferSchema","true").option("header","true").csv("wasb:///HdiSamples/HdiSamples/SensorSampleData/building/building.csv") 
+building_csv.printSchema = Comando usado para inferir automaticamente o esquema a partir da linha de cabeçalho dos nomes das colunas e dos dados que o arquivo contém;
+
+building_csv.show() = Comando usado para exibir o conteúdo do DataFrame;
+
+import org.apache.spark.sql.types._; 
+val schma = 
+   StructType(List(   
+       StructField("Date", StringType, false),   
+       StructField("Time", StringType, false),   
+       StructField("TargetTemp", IntegerType, false),   
+       StructField("ActualTemp", IntegerType, false),   
+       StructField("System", IntegerType, false),   
+       StructField("SystemAge", IntegerType, false),   
+       StructField("BuildingID", IntegerType, false))) 
+val hvac_csv = spark.read.schema(schma).option("header", true).csv("wasb:///HdiSamples/HdiSamples/SensorSampleData/hvac/HVAC.csv") 
+hvac_csv.printSchema = Comando usado para definir um esquema chamado schma e carregue o DataFrame usando o método spark.read.csv
+
+import org.apache.spark.sql.Encoders;
+ 
+case class HvacReading(Date:String, Time:String, TargetTemp:Int, ActualTemp:Int, System:Int, SystemAge:Int, BuildingID:Int)  
+   val schma = Encoders.product[HvacReading].schema 
+   val hvac_csv = spark.read.schema(schma).option("header", true).csv("wasb:///HdiSamples/HdiSamples/SensorSampleData/hvac/HVAC.csv") 
+hvac_csv.printSchema = Comando usado para definir uma classe de caso chamada HvacReading e use-a para derivar o esquema do DataFrame;
+
+val building_data = building_csv.select($"BuildingID", $"BuildingAge", $"HVACproduct") 
+building_data.show() = Comando usado para criar um novo DataFrame chamado building_data selecionando colunas no building_csv DataFrame;
+
+var hvac_data = hvac_csv.select($"BuildingID", $"ActualTemp", $"TargetTemp").filter($"ActualTemp" > $"TargetTemp") 
+hvac_data.show() = Comando usado para criar um novo DataFrame chamado hvac_data selecionando colunas no hvac_csv DataFrame e filtrando-o para incluir apenas linhas em que o ActualTemp é maior que o TargetTemp;
+
+var hot_buildings = building_data.join(hvac_data, "BuildingID") 
+hot_buildings.show() = Comando usado para associar o hvac_data DataFrame ao building_data DataFrame;
+
+hot_buildings.createOrReplaceTempView("tmpHotBuildings") = Comando usado para registrar o DataFrame hot_buildings como tabelas temporárias denominadas tmpHotBuildings;
+
+%%sql 
+SELECT HVACProduct, AVG(ActualTemp - TargetTemp) 
+AS AvgError 
+FROM tmpHotBuildings 
+GROUP BY HVACproduct 
+ORDER BY HVACproduct = Comando usado para consultar as tabelas temporárias usando o SQL incorporado;
+
+hvac_csv.write.saveAsTable("hvac") 
+val hvac_df = spark.sql("SELECT * FROM hvac") 
+hvac_df.show() = Comando para salvar o DataFrame hvac_csv como uma tabela persistente chamada hvac, para que possa ser acessada por outros processos;
+
+
+
+SPARK STREAMING COM PYTHON
+
+
+
+
+from pyspark.streaming import StreamingContext
+# Create a StreamingContext
+ssc = StreamingContext(sc, 1)
+ssc.checkpoint("wasb:///chkpnt")
+# Define a text file stream for the /stream folder
+streamTxt = ssc.textFileStream("wasb:///stream")
+# count the words
+words = streamTxt.flatMap(lambda line: line.split(" "))
+pairs = words.map(lambda word: (word, 1))
+wordCounts = pairs.reduceByKeyAndWindow(lambda a, b: a + b, lambda x, y: x - y, 60, 10)
+# Print the first 20 elements in the DStream
+wordCounts.pprint(num=20)
+ssc.start() = Comandos usados para criar um contexto de Spark Streaming e usa seur método textFileStream para criar um fluxo que lê arquivos de texto à medida que são adicionados à pasta /stream
+
+
+
+
+SPARK STREAMING COM SCALA
+
+
+import org.apache.spark.streaming._
+// Create a StreamingContext from the existing Spark context
+val ssc = new StreamingContext(sc, Seconds(1))
+ssc.checkpoint("wasb:///chkpnt")
+// Define a text file stream for the /stream folder
+val streamRdd = ssc.textFileStream("wasb:///stream")
+// count the words
+val words = streamRdd.flatMap(line => line.split(" "))
+val pairs = words.map(word => (word, 1))
+val wordCounts = pairs.reduceByKeyAndWindow({(a, b) => a + b},
+                                            {(x, y) => x - y},
+                                            Seconds(60),
+                                            Seconds(10))
+// Print the first 20 elements in the DStream
+wordCounts.print()
+ssc.start() = Comandos usados para criar um contexto de Spark Streaming e usa seu método textFileStream para criar um fluxo que lê arquivos de texto à medida que são adicionados à pasta /stream
+
+ssc.stop() = Comando usado para interromper o contexto de streaming;
+
+
+PROGRAMA STREAMING PYTHON
+
+
+from pyspark.sql.types import *
+from pyspark.sql.functions import *
+
+inputPath = "wasb:///structstream/"
+jsonSchema = StructType([
+  StructField("device", StringType(), False),
+  StructField("status", StringType(), False)
+])
+fileDF = spark.readStream.schema(jsonSchema).option("maxFilesPerTrigger", 1).json(inputPath)
+countDF = fileDF.filter("status == 'error'").groupBy("device").count()
+query = countDF.writeStream.format("memory").queryName("counts").outputMode("complete").start()
+%%sql
+select * from counts
+query.stop() = Código usado para definir um objeto de consulta que grava a saída em uma tabela na memória denominada count;
+
+
+
+PROGRAMA STREAMING SCALA
+
+import org.apache.spark.sql.types._;
+import org.apache.spark.sql.functions._;
+val inputPath = "wasb:///structstream/"
+val jsonSchema = new StructType().add("device", StringType).add("status", StringType)
+val fileDF = spark.readStream.schema(jsonSchema).option("maxFilesPerTrigger", 1).json(inputPath)
+val countDF = fileDF.filter("status == 'error'").groupBy($"device").count()
+val query =  countDF.writeStream.format("memory").queryName("counts").outputMode("complete").start()
+%%sql
+select * from counts
+query.stop() = Código usado para definir um objeto de consulta que grava a saída em uma tabela na memória denominada count;
+
+
+%%sql 
+select * from counts = Comando usado para visualizar os dados da tabela count;
+
+query.stop() = Comando usado para para interromper a consulta de streaming;
+
+
+
+APLICATIVO NODE.JS PARA ENVIAR EVENTOS
+
+
+nom init = Comando usado para criar um arquivo package.json para seu aplicativo;
+
+npm install azure-event-hubs = Comando usado para instalar o pacote de Hubs de Eventos do Azure
+
+node eventclient.js = Comando usado para executar um script .js;
+
+
+CONSULTA DE FLUXO ESTRUTURADO SPARK
+
+spark-shell --packages "com.microsoft.azure:spark-streamingeventhubs_2.11:2.1.0" = Comando usado para iniciar o shell Spark e carregar o pacote spark-streaming-eventhubs
+
+
+val inputStream = spark.readStream.  
+ format("eventhubs").  
+ options(eventhubParameters).  
+ load() = Comando usado para ler dados do hub de eventos;
+
+import org.apache.spark.sql.types._; 
+import org.apache.spark.sql.functions._; 
+val jsonSchema = new StructType().  
+ add("device", StringType).  
+ add("reading", StringType) = Comando usado para definir um esquema para a mensagem JSON;
+
+val events = inputStream.select($"enqueuedTime".cast("Timestamp").  alias("enqueuedTime"),from_json($"body".cast("String"), jsonSchema).  
+alias("sensorReading")) = Comando usado para recuperar o tempo na fila e a mensagem JSON do fluxo de entrada;
+
+val eventdetails =   
+events.select($"enqueuedTime",$"sensorReading.device".  
+alias("device"), $"sensorReading.reading".cast("Float"). 
+alias("reading")) Comando usado para extrair o nome do dispositivo e a leitura da mensagem JSON;
+
+val eventAvgs = eventdetails.   
+withWatermark("enqueuedTime", "10 seconds").   
+groupBy(window($"enqueuedTime", "1 minutes"), $"device"
+).avg("reading").   
+select($"window.start", $"window.end", $"device", $"avg(reading)") = Comando usado para agregar a leitura média de cada dispositivo em uma janela de 1 minuto
+
+
+eventAvgs.writeStream.format("csv").
+option("checkpointLocation", "/checkpoint").
+option("path", "/streamoutput").
+outputMode("append").
+start().awaitTermination() = Comando usado para iniciar a consulta e grave o fluxo de saída no formato CSV;
+
+
+
+ANALISAR OS AGGREGATED STREAM DATA
+
+
+from pyspark.sql.types import * 
+from pyspark.sql.functions import * 
+   devSchema = StructType([         
+       StructField("WindowStart", TimestampType(), False),        
+       StructField("WindowEnd", TimestampType(), False),         
+       StructField("Device", StringType(), False),         
+       StructField("AvgReading", FloatType(), False)     ]) 
+   devData = spark.read.csv('wasb://<CONTAINER>@<STORAGE_ACCT>.blob.core.windows.net /streamoutput/', schema=devSchema, header=False) devData.createOrReplaceTempView("devicereadings") 
+devData.show() = Comando usado para exibir as primeiras 20 linhas de dados da saída CSV;
+
+%%sql 
+SELECT * FROM devicereadings 
+ORDER BY WindowEnd = Comando usado para consultar a tabela temporária;
+
+
+SPARK STREAMING AND KAFKA
+
+%%configure
+{"conf": {"spark.jars.packages":"org.apache.spark:spark-sql-kafka-0-10_2.11:2.1.1"}} = Comando usado para configurar a versão do kafka que será utilizada;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
